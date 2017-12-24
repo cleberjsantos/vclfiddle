@@ -15,13 +15,68 @@ addons:
 
 env:
   - SCRIPTROOT=/vagrant
+  - WEB=/var/web
+  - VCLFIDDLE=/opt/vclfiddle/
 
-before_script:
+before_install:
+  - echo "ubuntu:ubuntu" | sudo chpasswd
+  - sudo adduser --disabled-password --gecos "" vagrant
+  - sudo adduser vagrant adm
   - sudo mkdir -p $SCRIPTROOT && sudo cp -rf ./* $SCRIPTROOT/
-  - sudo mkdir -p /opt/vclfiddle/
-  - sudo mkdir -p /var/web/
+  - sudo mkdir -p $VCLFIDDLE
+  - sudo mkdir -p $WEB
+
+install:
+  - |
+    if ! command -v docker >/dev/null; then
+      curl -sSL https://get.docker.com/ | sudo sh
+    fi
+    
+    # install nodejs
+    if ! command -v npm >/dev/null; then
+      curl -sL https://deb.nodesource.com/setup_4.x | sudo bash -
+      sudo apt-get install --assume-yes nodejs
+    fi
+    
+    if ! command -v node-gyp >/dev/null; then
+        sudo apt-get install --assume-yes node-gyp
+    fi
+    
+    # install sails.js
+    if ! command -v sails >/dev/null; then
+      sudo npm install --global sails@0.10.5
+    fi
+
+    # install the web app
+    sudo rsync -av $SCRIPTROOT/web/ $WEB
+    pushd $WEB && sudo npm install && popd
+
+before_scritp:
+  - sudo mkdir -p /var/lib/vclfiddle/
+  - sudo chown vagrant:adm /var/lib/vclfiddle/
+  - sudo chmod 0775 /var/lib/vclfiddle/
 
 script:
-  - ./bootstrap.sh
+  - $SCRIPTROOT/varnish5_2_1/build.sh
+  - $SCRIPTROOT/varnish5_1_3/build.sh
+  - $SCRIPTROOT/varnish5_0_0/build.sh
+  - $SCRIPTROOT/varnish4_1_9/build.sh
+  - $SCRIPTROOT/varnish4_0_5/build.sh
+  - $SCRIPTROOT/varnish3_0_7/build.sh
+  - $SCRIPTROOT/varnish2_1_5/build.sh
+  - $SCRIPTROOT/varnish2_0_6/build.sh
+
+after_script:
+  - sudo gcc $SCRIPTROOT/run-varnish-container.c -o $VCLFIDDLE/run-varnish-container
+  - sudo cp $SCRIPTROOT/run-varnish-container.py $VCLFIDDLE/run-varnish-container.py
+  - sudo chown root:root $VCLFIDDLE/run-varnish-container*
+  - sudo chmod 04755 $VCLFIDDLE/run-varnish-container
+  - sudo chmod 755 $VCLFIDDLE/run-varnish-container.py
+  - sudo npm install --global mocha
+  - sudo rsync -av $SCRIPTROOT/web/ $WEB
+  - cd $WEB && sudo npm install
+
+after_success:
+  - sudo npm test
 
 # vim:set et ts=2 sw=2:
