@@ -20,8 +20,8 @@ env:
 
 before_install:
   - sudo mkdir -p $SCRIPTROOT && sudo cp -rf ./* $SCRIPTROOT
-  - sudo mkdir -p $VCLFIDDLE
-  - sudo mkdir -p $WEB
+  - sudo mkdir -p /opt/vclfiddle/
+  - sudo mkdir -p /var/web
 
 install:
   - |
@@ -45,8 +45,8 @@ install:
     fi
 
     # install the web app
-    sudo rsync -av $SCRIPTROOT/web/ $WEB
-    pushd $WEB && sudo npm install && popd
+    sudo rsync -av $SCRIPTROOT/web/ /var/web
+    pushd /var/web && sudo npm install && popd
 
 before_script:
   - sudo mkdir -p /var/lib/vclfiddle/
@@ -64,14 +64,14 @@ script:
   - $SCRIPTROOT/varnish2_0_6/build.sh
 
 after_script:
-  - sudo gcc $SCRIPTROOT/run-varnish-container.c -o $VCLFIDDLE/run-varnish-container
-  - sudo cp $SCRIPTROOT/run-varnish-container.py $VCLFIDDLE/run-varnish-container.py
-  - sudo chown root:root $VCLFIDDLE/run-varnish-container*
-  - sudo chmod 04755 $VCLFIDDLE/run-varnish-container
-  - sudo chmod 755 $VCLFIDDLE/run-varnish-container.py
+  - sudo gcc $SCRIPTROOT/run-varnish-container.c -o /opt/vclfiddle/run-varnish-container
+  - sudo cp $SCRIPTROOT/run-varnish-container.py /opt/vclfiddle/run-varnish-container.py
+  - sudo chown root:root /opt/vclfiddle/run-varnish-container*
+  - sudo chmod 04755 /opt/vclfiddle/run-varnish-container
+  - sudo chmod 755 /opt/vclfiddle/run-varnish-container.py
   - sudo npm install --global mocha
-  - sudo rsync -av $SCRIPTROOT/web/ $WEB
-  - cd $WEB && sudo npm install
+  - sudo rsync -av $SCRIPTROOT/web/ /var/web
+  - cd /var/web && sudo npm install
 
 after_success:
   - sudo npm test
