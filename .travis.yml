@@ -1,5 +1,4 @@
 sudo: required
-dist: xenial
 language: bash
 
 services:
@@ -14,7 +13,18 @@ addons:
     - gcc
 
 env:
-  - SCRIPTROOT=/vagrant
+  - distribution: ubuntu
+    version: trusty
+    SCRIPTROOT: /vagrant
+  - distribution: ubuntu
+    version: xenial 
+    SCRIPTROOT: /vagrant
+  - distribution: debian
+    version: stretch
+    SCRIPTROOT: /vagrant
+  - distribution: debian
+    version: jessie
+    SCRIPTROOT: /vagrant
 
 before_install:
   - sudo adduser --disabled-password --gecos "" vagrant
