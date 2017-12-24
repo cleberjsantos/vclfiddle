@@ -17,7 +17,7 @@ env:
   - SCRIPTROOT=/vagrant
 
 before_script:
-  - sudo mkdir -p $SCRIPTROOT
+  - sudo mkdir -p $SCRIPTROOT && sudo cp -rf ./* $SCRIPTROOT/
   - sudo mkdir -p /opt/vclfiddle/
   - sudo mkdir -p /var/web/
 
