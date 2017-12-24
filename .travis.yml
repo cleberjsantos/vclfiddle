@@ -1,5 +1,5 @@
-sudo: required
 language: bash
+sudo: required
 
 services:
     - docker
@@ -12,19 +12,21 @@ addons:
     - build-essential
     - gcc
 
-env:
-  - distribution: ubuntu
-    version: trusty
-    SCRIPTROOT: /vagrant
-  - distribution: ubuntu
-    version: xenial 
-    SCRIPTROOT: /vagrant
-  - distribution: debian
-    version: stretch
-    SCRIPTROOT: /vagrant
-  - distribution: debian
-    version: jessie
-    SCRIPTROOT: /vagrant
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      group: deprecated-2017Q4
+      env: SCRIPTROOT=/vagrant
+    - os: linux
+      dist: xenial
+      env: SCRIPTROOT=/vagrant
+    - os: linux 
+      dist: stretch
+      env: SCRIPTROOT=/vagrant
+    - os: linux
+      dist: jessie
+      env: SCRIPTROOT=/vagrant
 
 before_install:
   - sudo adduser --disabled-password --gecos "" vagrant
