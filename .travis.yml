@@ -17,6 +17,8 @@ env:
   - SCRIPTROOT=/vagrant
 
 before_install:
+  - sudo adduser --disabled-password --gecos "" vagrant
+  - sudo adduser vagrant adm
   - sudo mkdir -p $SCRIPTROOT && sudo cp -rf ./* $SCRIPTROOT
   - sudo mkdir -p /opt/vclfiddle/
   - sudo mkdir -p /var/web
