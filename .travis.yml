@@ -19,10 +19,7 @@ env:
   - VCLFIDDLE=/opt/vclfiddle/
 
 before_install:
-  - echo "ubuntu:ubuntu" | sudo chpasswd
-  - sudo adduser --disabled-password --gecos "" vagrant
-  - sudo adduser vagrant adm
-  - sudo mkdir -p $SCRIPTROOT && sudo cp -rf ./* $SCRIPTROOT/
+  - sudo mkdir -p $SCRIPTROOT && sudo cp -rf ./* $SCRIPTROOT
   - sudo mkdir -p $VCLFIDDLE
   - sudo mkdir -p $WEB
 
