@@ -15,8 +15,6 @@ addons:
 
 env:
   - SCRIPTROOT=/vagrant
-  - WEB=/var/web
-  - VCLFIDDLE=/opt/vclfiddle/
 
 before_install:
   - sudo mkdir -p $SCRIPTROOT && sudo cp -rf ./* $SCRIPTROOT
