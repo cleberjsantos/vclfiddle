@@ -51,7 +51,7 @@ install:
     sudo rsync -av $SCRIPTROOT/web/ $WEB
     pushd $WEB && sudo npm install && popd
 
-before_scritp:
+before_script:
   - sudo mkdir -p /var/lib/vclfiddle/
   - sudo chown vagrant:adm /var/lib/vclfiddle/
   - sudo chmod 0775 /var/lib/vclfiddle/
