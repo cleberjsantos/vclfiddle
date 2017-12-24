@@ -1,6 +1,6 @@
-language: bash
-sudo: true
+sudo: required
 dist: xenial
+language: bash
 
 services:
     - docker
@@ -10,9 +10,16 @@ addons:
     packages:
     - pkg-config
     - cmake
+    - build-essential
+    - gcc
 
-before_install:
-  - mkdir /vagrant
+env:
+  - SCRIPTROOT=/vagrant
+
+before_script:
+  - sudo mkdir -p $SCRIPTROOT
+  - sudo mkdir -p /opt/vclfiddle/
+  - sudo mkdir -p /var/web/
 
 script:
   - ./bootstrap.sh
