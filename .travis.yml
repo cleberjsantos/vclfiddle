@@ -21,12 +21,6 @@ matrix:
     - os: linux
       dist: xenial
       env: SCRIPTROOT=/vagrant
-    - os: linux 
-      dist: stretch
-      env: SCRIPTROOT=/vagrant
-    - os: linux
-      dist: jessie
-      env: SCRIPTROOT=/vagrant
 
 before_install:
   - sudo adduser --disabled-password --gecos "" vagrant
