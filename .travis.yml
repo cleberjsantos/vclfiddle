@@ -24,29 +24,13 @@ before_install:
   - sudo mkdir -p /var/web
 
 install:
-  - |
-    if ! command -v docker >/dev/null; then
-      curl -sSL https://get.docker.com/ | sudo sh
-    fi
-    
-    # install nodejs
-    if ! command -v npm >/dev/null; then
-      curl -sL https://deb.nodesource.com/setup_4.x | sudo bash -
-      sudo apt-get install --assume-yes nodejs
-    fi
-    
-    if ! command -v node-gyp >/dev/null; then
-        sudo apt-get install --assume-yes node-gyp
-    fi
-    
-    # install sails.js
-    if ! command -v sails >/dev/null; then
-      sudo npm install --global sails@0.10.5
-    fi
-
-    # install the web app
-    sudo rsync -av $SCRIPTROOT/web/ /var/web
-    pushd /var/web && sudo npm install && popd
+  - curl -sSL https://get.docker.com/ | sudo sh
+  - curl -sL https://deb.nodesource.com/setup_4.x | sudo bash -
+  - sudo apt-get install --assume-yes nodejs
+  - sudo apt-get install --assume-yes node-gyp
+  - sudo npm install --global sails@0.10.5
+  - sudo rsync -av $SCRIPTROOT/web/ /var/web
+  - pushd /var/web && sudo npm install && popd
 
 before_script:
   - sudo mkdir -p /var/lib/vclfiddle/
