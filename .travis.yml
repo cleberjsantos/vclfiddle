@@ -1,4 +1,4 @@
-language: generic
+language: bash 
 sudo: required
 group: deprecated-2017Q4
 cache: packages
