@@ -1,5 +1,6 @@
 language: bash
 sudo: required
+cache: packages
 
 services:
     - docker
@@ -12,15 +13,13 @@ addons:
     - build-essential
     - gcc
 
+env: SCRIPTROOT=/vagrant
+
 matrix:
   include:
-    - os: linux
-      dist: trusty
+    - dist: trusty
       group: deprecated-2017Q4
-      env: SCRIPTROOT=/vagrant
-    - os: linux
-      dist: xenial
-      env: SCRIPTROOT=/vagrant
+    - dist: xenial
 
 before_install:
   - sudo adduser --disabled-password --gecos "" vagrant
@@ -28,6 +27,7 @@ before_install:
   - sudo mkdir -p $SCRIPTROOT && sudo cp -rf ./* $SCRIPTROOT
   - sudo mkdir -p /opt/vclfiddle/
   - sudo mkdir -p /var/web
+  - sudo apt-get update
 
 install:
   - curl -sSL https://get.docker.com/ | sudo sh
