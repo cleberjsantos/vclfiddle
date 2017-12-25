@@ -1,5 +1,9 @@
-language: bash
+language: generic
 sudo: required
+
+dist: trusty
+group: deprecated-2017Q4
+
 cache: packages
 
 services:
@@ -17,8 +21,6 @@ env: SCRIPTROOT=/vagrant
 
 matrix:
   include:
-    - dist: trusty
-      group: deprecated-2017Q4
     - dist: xenial
 
 before_install:
