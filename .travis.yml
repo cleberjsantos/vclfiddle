@@ -13,6 +13,8 @@ addons:
     - cmake
     - build-essential
     - gcc
+    - curl
+    - rsync
 
 env: SCRIPTROOT=/vagrant
 
