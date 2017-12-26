@@ -29,6 +29,7 @@ before_install:
   - sudo mkdir -p $SCRIPTROOT && sudo cp -rf ./* $SCRIPTROOT
   - sudo mkdir -p /opt/vclfiddle/
   - sudo mkdir -p /var/web
+  - sudo mkdir -p /var/web/.tmp && sudo chown -R 1001 /var/web/.tmp
   - sudo apt-get update
 
 install:

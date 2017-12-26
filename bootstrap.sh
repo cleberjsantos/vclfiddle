@@ -34,6 +34,7 @@ fi
 # install the web app
 sudo rsync -av $SCRIPTROOT/web/ /var/web/
 pushd /var/web && sudo npm install && popd
+sudo mkdir -p /var/web/.tmp && sudo chown -R 1001 /var/web/.tmp
 
 # build the Varnish docker image
 $SCRIPTROOT/varnish5_2_1/build.sh
