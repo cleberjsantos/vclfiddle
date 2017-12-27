@@ -47,20 +47,27 @@
     <div class="col-md-10">
       <input id="fiddleid" type="hidden" name="fiddleid" value="<%= fiddleid || '' %>" />
       <div class="row">
-        <div class="col-md-12">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <div class="editor"><textarea class="form-control" id="vtc" name="vtc"><%= vtc %></textarea><span class="window-label">VTC</span></div>
-              </div>
+        <div class="col-md-6">
+          <div class="col-md-15">
+            <div class="form-group">
+              <div class="editor"><textarea class="form-control" id="vcl" name="vcl"><%= vcl %></textarea><span class="window-label">VCL</span></div>
             </div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <div class="spinner"><img src="/images/spinner.gif" width="128" height="78" alt="Please wait." /></div>
-                <div class="editor"><textarea class="form-control" id="varnishtest"><%= log %></textarea><span class="window-label">varnishtest</span></div>
-              </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="col-md-15">
+            <div class="form-group">
+              <div class="editor"><textarea class="form-control" id="vtc" name="vtc"><%= vtc %></textarea><span class="window-label">VTC</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-12">
+          <div class="col-md-15">
+            <div class="form-group">
+              <div class="spinner"><img src="/images/spinner.gif" width="128" height="78" alt="Please wait." /></div>
+              <div class="editor"><textarea class="form-control" id="varnishtest"><%= log %></textarea><span class="window-label">varnishtest</span></div>
             </div>
           </div>
         </div>
@@ -72,11 +79,12 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script src="/js/bootstrap.min.js" rel="stylesheet"></script>
 <script src="/CodeMirror/codemirror.js"></script>
-<script src="/CodeMirror/mode/javascript/javascript.js"></script>
+<script src="/CodeMirror/mode/clike/clike.js"></script>
 <% if (typeof results === 'object') { %><script>var vclfiddle_results=<%- JSON.stringify(results) %>;</script><% } %>
 <script>
-  var vtc = CodeMirror.fromTextArea(document.getElementById("vtc"), { lineNumbers: true, mode: {name: "javascript", json: true}, theme: "ambiance" });
-  var varnishtest = CodeMirror.fromTextArea(document.getElementById("varnishtest"), { lineNumbers: true, mode: {name: "javascript", json: true}, readOnly: true });
+  var vcl = CodeMirror.fromTextArea(document.getElementById("vcl"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true} });
+  var vtc = CodeMirror.fromTextArea(document.getElementById("vtc"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true} });
+  var varnishtest = CodeMirror.fromTextArea(document.getElementById("varnishtest"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true}, readOnly: true });
   var hiddenFiddleIdInput = document.getElementById('fiddleid');
 
   function clearTransactions() {
@@ -160,6 +168,7 @@
 
   $("#runtest").click(function (e) {
     e.preventDefault();
+    vcl.save();
     vtc.save();
     $('.spinner img').fadeIn();
     $.ajax({
@@ -268,4 +277,3 @@
   }
   .results-container table { display: table; }
 </style>
-<link rel="stylesheet" href="/css/ambiance.css">

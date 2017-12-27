@@ -14,23 +14,24 @@ const defaultVcl = 'vcl 4.0;\n\nbackend default {\n .host = "www.vclfiddle.net";
 const defaultHar = "curl http://www.vclfiddle.net --header 'User-Agent: vclFiddle'";
 const defaultImage = 'varnish5_2_1';
 
+const defaultVcl_toTest = 'vcl 4.0;\n\n' +
+
+'backend default {\n' +
+'        .host = "www.vclfiddle.net";\n' +
+'        .port = "80";\n' +
+'}\n\n' +
+
+'sub vcl_recv {\n' +
+'        if (req.url ~ "/admin") {\n' +
+'                return(pass);\n' +
+'        }\n' +
+'}\n';
 
 const defaultVtc = 'varnishtest "Test external VCL"\n\n' +
 
 'varnish v1 -vcl {\n' +
-'   # VCL Here\n' +
-'   vcl 4.0;\n\n' +
-
-'   backend default {\n' +
-'           .host = "www.vclfiddle.net";\n' +
-'           .port = "80";\n' +
-'   }\n\n' +
-
-'   sub vcl_recv {\n' +
-'           if (req.url ~ "/admin") {\n' +
-'                   return(pass);\n' +
-'           }\n' +
-'   }\n' +
+"   # don't remove the comment below\n" +
+'   # VCL_PLACEHOLDER\n' +
 
 '} -start\n\n' +
 
@@ -161,6 +162,7 @@ module.exports = {
       if (!fiddleid) {
         return res.view({
           fiddleid: '',
+          vcl: defaultVcl_toTest,
           vtc: defaultVtc,
           log: '',
           image: defaultImage,
@@ -276,6 +278,84 @@ module.exports = {
                 runindex: fiddle.runIndex,
                 vcl: viewState.vcl,
                 har: viewState.har,
+                log: viewState.log
+              });
+
+            });
+
+          }, function (err) {
+            // completed
+            return completeRun(err, fiddle, allRequests);
+          });
+
+        });
+
+      });
+
+    },
+
+    runtest: function (req, res) {
+      var fiddleid = req.body.fiddleid || '';
+      var vcl = req.body.vcl;
+      var vtc = req.body.vtc;
+      var dockerImage = req.body.image || defaultImage;
+
+      if (Object.keys(supportedImages).indexOf(dockerImage) < 0) {
+        sails.log.warn('Invalid image parameter:' + dockerImage);
+        return res.badRequest();
+      }
+
+      if (typeof vcl !== 'string' || typeof rawRequests !== 'string') return res.badRequest();
+
+      RequestMetadataService.parseInputRequests(vtc, function (err, _ignored, allRequests) {
+
+        if (err) {
+          return res.ok({
+            fiddleid: fiddleid,
+            vcl: vcl,
+            vtc: vtc,
+            log: err.toString()
+          }, 'vcl/test');
+        }
+
+        if (allRequests.includedRequests.length == 0) {
+          return res.ok({
+            fiddleid: fiddleid,
+            vcl: vcl,
+            vtc: vtc,
+            log: 'VTC does not contain any supported requests.'
+          }, 'vcl/test');
+        }
+
+        if (!!req.body.dbl) {
+          allRequests.includedRequests = allRequests.includedRequests.concat(allRequests.includedRequests);
+        }
+
+        FiddlePersistenceService.prepareFiddle(fiddleid, function (err, fiddle) {
+          if (err) return res.serverError(err);
+
+          // TODO persist state of 'replay requests twice' option
+
+          ContainerService.beginReplay(fiddle.path, allRequests.includedRequests, vcl, dockerImage, function (err) {
+            // started
+
+            var viewState = {
+              image: dockerImage,
+              vcl: vcl,
+              vtc: vtc
+            };
+            if (err) {
+              viewState.log = 'Error: ' + err;
+            }
+
+            FiddlePersistenceService.saveViewState(fiddle, viewState, function (err) {
+              if (err) return res.serverError(err);
+
+              return res.ok({
+                fiddleid: fiddle.id,
+                runindex: fiddle.runIndex,
+                vcl: viewState.vcl,
+                vtc: viewState.vtc,
                 log: viewState.log
               });
 

@@ -127,12 +127,12 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script src="/js/bootstrap.min.js" rel="stylesheet"></script>
 <script src="/CodeMirror/codemirror.js"></script>
-<script src="/CodeMirror/mode/javascript/javascript.js"></script>
+<script src="/CodeMirror/mode/clike/clike.js"></script>
 <% if (typeof results === 'object') { %><script>var vclfiddle_results=<%- JSON.stringify(results) %>;</script><% } %>
 <script>
-  var vcl = CodeMirror.fromTextArea(document.getElementById("vcl"), { lineNumbers: true, mode: {name: "javascript", json: true} });
-  var har = CodeMirror.fromTextArea(document.getElementById("har"), { lineNumbers: true, mode: {name: "javascript", json: true} });
-  var varnishlog = CodeMirror.fromTextArea(document.getElementById("varnishlog"), { lineNumbers: true, mode: {name: "javascript", json: true}, readOnly: true });
+  var vcl = CodeMirror.fromTextArea(document.getElementById("vcl"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true} });
+  var har = CodeMirror.fromTextArea(document.getElementById("har"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true} });
+  var varnishlog = CodeMirror.fromTextArea(document.getElementById("varnishlog"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true}, readOnly: true });
   var hiddenFiddleIdInput = document.getElementById('fiddleid');
 
   function clearTransactions() {
