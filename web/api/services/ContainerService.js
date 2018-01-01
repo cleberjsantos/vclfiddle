@@ -34,6 +34,26 @@ function writeInputFiles (dirPath, requests, vclText, callback) {
 
 }
 
+function writeTestFiles (dirPath, vclText, vtcText, callback) {
+
+  fs.writeFile(path.join(dirPath, 'default.vcl'), vclText, function (err) {
+    if (err) return callback(err);
+
+    var vtcTitle = vtcText.split(/\r?\n/)[0].split(/^\s*varnishtest\s+/)[1].replace(/\"/g,'');
+    var vtcId    = Math.floor(Math.random() * 0x10000).toString(10);
+
+    var filename = 'test_' + ('000' + vtcId + '.vtc');
+
+    fs.writeFile(path.join(dirPath, filename), vtcText, function (err) {
+      if (err) return callback(err);
+      callback(null);
+    });
+
+
+  });
+
+}
+
 function runContainer (dirPath, dockerImageName, callback) {
 
   var dockerTimeoutMillseconds = 30 * 1000;
@@ -107,6 +127,26 @@ function readOutputFiles(dirPath, callback) {
 }
 
 module.exports = {
+  beginVtc: function (dirPath, vclText, vtcText, dockerImageName, hasStartedCallback, hasCompletedCallback) {
+    if (typeof hasCompletedCallback !== 'function') {
+      throw new TypeError('Fifth argument "hasCompletedCallback" must be a function.');
+    }
+
+    sails.log.debug('Begin tests with vcl in: ' + dirPath);
+
+    writeTestFiles(dirPath, vclText, vtcText, function (err) {
+
+      if (err) return hasStartedCallback(err);
+
+      runContainer(dirPath, dockerImageName, function (err) {
+        sails.log.debug('Run container completed for: ' + dirPath);
+        hasCompletedCallback(err, dirPath);
+      });
+
+      hasStartedCallback();
+
+    })
+  },
 
   beginReplay: function (dirPath, includedRequests, vclText, dockerImageName, hasStartedCallback, hasCompletedCallback) {
 

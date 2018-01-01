@@ -159,6 +159,7 @@ module.exports = {
     test: function(req, res) {
       var fiddleid = req.params.fiddleid || '';
       var runindex = req.params.runindex || '0';
+
       if (!fiddleid) {
         return res.view({
           fiddleid: '',
@@ -170,6 +171,28 @@ module.exports = {
         });
       }
 
+      FiddlePersistenceService.getFiddleRun(fiddleid, runindex, function (err, fiddle) {
+
+        if (err) return res.serverError(err);
+
+        if (fiddle === null) return res.notFound();
+
+        FiddlePersistenceService.loadViewState(fiddle, function (err, viewState) {
+          if (err) return res.serverError(err);
+
+          return res.view({
+            fiddleid: fiddle.id,
+            vcl: viewState.vcl,
+            vtc: viewState.vtc,
+            log: viewState.log,
+            results: viewState.results,
+            image: viewState.image,
+            supportedImages: supportedImages
+          })
+
+        });
+
+      });
 
     },
 
@@ -220,7 +243,6 @@ module.exports = {
       var vcl = req.body.vcl;
       var rawRequests = req.body.har;
       var dockerImage = req.body.image || defaultImage;
-
 
       if (Object.keys(supportedImages).indexOf(dockerImage) < 0) {
         sails.log.warn('Invalid image parameter:' + dockerImage);
@@ -305,9 +327,9 @@ module.exports = {
         return res.badRequest();
       }
 
-      if (typeof vcl !== 'string' || typeof rawRequests !== 'string') return res.badRequest();
+      if (typeof vcl !== 'string' || typeof vtc !== 'string') return res.badRequest();
 
-      RequestMetadataService.parseInputRequests(vtc, function (err, _ignored, allRequests) {
+      RequestMetadataService.parseVtc(vtc, function (err) {
 
         if (err) {
           return res.ok({
@@ -318,25 +340,12 @@ module.exports = {
           }, 'vcl/test');
         }
 
-        if (allRequests.includedRequests.length == 0) {
-          return res.ok({
-            fiddleid: fiddleid,
-            vcl: vcl,
-            vtc: vtc,
-            log: 'VTC does not contain any supported requests.'
-          }, 'vcl/test');
-        }
-
-        if (!!req.body.dbl) {
-          allRequests.includedRequests = allRequests.includedRequests.concat(allRequests.includedRequests);
-        }
-
         FiddlePersistenceService.prepareFiddle(fiddleid, function (err, fiddle) {
           if (err) return res.serverError(err);
 
           // TODO persist state of 'replay requests twice' option
 
-          ContainerService.beginReplay(fiddle.path, allRequests.includedRequests, vcl, dockerImage, function (err) {
+          ContainerService.beginVtc(fiddle.path, vcl, vtc, dockerImage, function (err) {
             // started
 
             var viewState = {
@@ -363,7 +372,7 @@ module.exports = {
 
           }, function (err) {
             // completed
-            return completeRun(err, fiddle, allRequests);
+            return completeRun(err, fiddle);
           });
 
         });
