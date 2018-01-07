@@ -46,7 +46,7 @@ function writeTestFiles (dirPath, vclText, vtcText, callback) {
 
     fs.writeFile(path.join(dirPath, filename), vtcText, function (err) {
       if (err) return callback(err);
-      callback(null);
+      return callback('success:' + filename);
     });
 
 
@@ -58,6 +58,21 @@ function runContainer (dirPath, dockerImageName, callback) {
 
   var dockerTimeoutMillseconds = 30 * 1000;
   child_process.execFile('/opt/vclfiddle/run-varnish-container', [dockerImageName, dirPath], {timeout: dockerTimeoutMillseconds}, function(err, stdout, stderr) {
+    if (err) return callback(err);
+
+    sails.log.debug('Docker stdout: ' + stdout);
+    sails.log.error('Docker stderr: ' + stderr);
+
+    callback(null);
+  });
+
+}
+
+function runVarnishtestContainer (dirPath, dockerImageName, vtc, vcl, callback) {
+
+  var dockerTimeoutMillseconds = 30 * 1000;
+
+  child_process.execFile('/opt/vclfiddle/run-varnish-container', [dockerImageName, dirPath, '--test', '--vtc=' + vtc, '--vcl=' + vcl], {timeout: dockerTimeoutMillseconds}, function(err, stdout, stderr) {
     if (err) return callback(err);
 
     sails.log.debug('Docker stdout: ' + stdout);
@@ -136,12 +151,20 @@ module.exports = {
 
     writeTestFiles(dirPath, vclText, vtcText, function (err) {
 
-      if (err) return hasStartedCallback(err);
+      if (err) {
 
-      runContainer(dirPath, dockerImageName, function (err) {
-        sails.log.debug('Run container completed for: ' + dirPath);
-        hasCompletedCallback(err, dirPath);
-      });
+        var wstatus = err.split(':')[0];
+
+        if (typeof(wstatus) === 'string' && wstatus === 'success'){
+          var vtc_file = err.split(':')[1];
+          var vcl_file = 'default.vcl';
+
+          runVarnishtestContainer(dirPath, dockerImageName, vtc_file, vcl_file, function (err) {
+            sails.log.debug('Run container completed for: ' + dirPath);
+            hasCompletedCallback(err, dirPath);
+          });
+        } else { return hasStartedCallback(err);}
+      }
 
       hasStartedCallback();
 
