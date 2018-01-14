@@ -22,50 +22,34 @@ const defaultVcl_toTest = 'vcl 4.0;\n\n' +
 '}\n\n' +
 
 'sub vcl_recv {\n' +
-'        if (req.url ~ "/admin") {\n' +
-'                return(pass);\n' +
+'        set req.http.x-original_url = req.url;\n\n' +
+'        if (req.url ~ "/") {\n' +
+'                return(hash);\n' +
 '        }\n' +
 '}\n';
 
-const defaultVtc = 'varnishtest "Test external VCL"\n\n' +
+const defaultVtc = 'varnishtest "Testing Varnish as Proxy"\n\n' +
+
+'server s1 {\n' +
+'    rxreq\n' +
+'    txresp\n\n' +
+
+'} -start\n\n' +
 
 'varnish v1 -vcl {\n' +
 "   # don't remove the comment below\n" +
 '   # VCL_PLACEHOLDER\n' +
-
 '} -start\n\n' +
 
 'client c1 {\n' +
-'  # First client request with VXID=1001\n' +
-'  # Request misses.  Varnish creates backend request with VXID=1002.\n' +
-'  # /index.html is cached from transaction VXID=1002\n' +
-'  txreq -url "/index.html"\n' +
+'  txreq\n' +
 '  rxresp\n' +
-'  expect resp.http.X-Varnish == "1001"\n\n' +
+'  expect resp.http.via ~ "varnish"\n' +
+'  expect resp.status == 200\n' +
+'} -run\n\n' +
 
-'  # Second client request with VXID=1003.\n' +
-'  # Request misses.  Varnish creates backend request with VXID=1004.\n' +
-'  # /admin is passed\n' +
-'  txreq -url "/admin"\n' +
-'  rxresp\n' +
-'  expect resp.http.X-Varnish == "1003"\n\n' +
-
-'  # Third client request with VXID=1005\n' +
-'  # Request hit.  Varnish builds response from resource cached in transaction\n' +
-'  # VXID=1002\n' +
-'  txreq -url "/index.html"\n' +
-'  rxresp\n' +
-'  expect resp.http.X-Varnish == "1005 1002"\n\n' +
-
-'  # Fourth client request with VXID=1006.\n' +
-'  # Request misses.  (Varnish creates backend request with VXID=1007.)\n' +
-'  # /admin is passed\n' +
-'  txreq -url "/admin"\n' +
-'  rxresp\n' +
-'  expect resp.http.X-Varnish == "1006"\n' +
-'} -run';
-
-
+'varnish v1 -expect cache_miss == 0\n' +
+'varnish v1 -expect cache_hit == 0';
 
 const supportedImages = {
   'varnish5_2_1': 'Varnish 5.2.1',
