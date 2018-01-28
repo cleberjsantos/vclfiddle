@@ -71,8 +71,30 @@ function vtest {
   debuglog "Done"
 }
 
+function vtctrans {
+  VTC_FILE=$1
+  VCL_FILE=$2
+
+  debuglog "Starting varnishtest"
+  if [ ! -e $VTC_FILE ]; then
+    debuglog "VCT File: $VTC_FILE not found"
+    exit 1
+  fi
+
+  debuglog "Testing $VTC_FILE using vtctrans in $VCL_FILE"
+  COMBINED_FILE=/fiddle/$RANDOM$(basename $VTC_FILE)
+  sed -e '/# VCL_PLACEHOLDER/ r '${VCL_FILE} -e 's/# VCL_PLACEHOLDER//' ${VTC_FILE} > ${COMBINED_FILE}
+  python /vtctrans.py -s ${COMBINED_FILE} 2>&1 >>/fiddle/run.log || exit $?
+
+  debuglog "running ${COMBINED_FILE}"
+  debuglog "Started varnishtest"
+  debuglog "Done"
+}
+
 if [ "$1" == "test" ]; then
    vtest $2 $3
+elif [ "$1" == "vtctrans" ]; then
+   vtctrans $2 $3
 else
    run
 fi

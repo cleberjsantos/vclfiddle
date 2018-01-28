@@ -13,6 +13,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--test', action='store_true', default=False,
                     help='Run with varnishtest')
 
+parser.add_argument('--vtctrans', action='store_true', default=False,
+                    help='Use re-format tool for varnishtest')
+
 parser.add_argument('--vtc', action='store', default=False,
                     dest='vtc',
                     help='Set a VCT File Path')
@@ -70,6 +73,7 @@ def main():
     imageName, dirPath = opts_known[1][:2]
     opt_dict = opts_known[0].__dict__
     run_test = opt_dict.get('test', 'False')
+    run_vtctrans = opt_dict.get('vtctrans', 'False')
     vtc = opt_dict.get('vtc', '')
     vcl = opt_dict.get('vcl', '')
 
@@ -84,11 +88,19 @@ def main():
         msgWarn(msgErr)
 
     os.environ['PATH'] = "/bin:/usr/bin"
-    if not run_test:
+    if not run_test and not run_vtctrans:
         cm = Popen(['/usr/bin/docker',
                     'run', '--rm', '-v', '{}:/fiddle'.format(dirPath),
                     '{}'.format(imageName)],
                    stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    elif not run_test and run_vtctrans:
+        cm = Popen(['/usr/bin/docker',
+                    'run', '--rm', '-v', '{}:/fiddle'.format(dirPath),
+                    '{}'.format(imageName),
+                    '/run.sh', 'vtctrans', 'fiddle/{}'.format(vtc),
+                    'fiddle/{}'.format(vcl)],
+                   stdin=PIPE, stdout=PIPE, stderr=PIPE)
+
     else:
         cm = Popen(['/usr/bin/docker',
                     'run', '--rm', '-v', '{}:/fiddle'.format(dirPath),

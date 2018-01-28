@@ -84,7 +84,7 @@ function completeRun(err, fiddle, allRequests) {
 
   ContainerService.readOutputFiles(fiddle.path, function (err, output) {
     if (err) return writeCompletedData(err);
-    if (output.runlog.length > 0) return writeCompletedData('Error: ' + output.runlog);
+    if (output.runlog.length > 0) return writeCompletedData(output.runlog);
 
     var parsedNcsa = RequestMetadataService.parseVarnish4NCSA(output.varnishncsa);
 
@@ -304,6 +304,7 @@ module.exports = {
       var fiddleid = req.body.fiddleid || '';
       var vcl = req.body.vcl;
       var vtc = req.body.vtc;
+      var vtctrans = req.body.use_vtctrans || 'off';
       var dockerImage = req.body.image || defaultImage;
 
       if (Object.keys(supportedImages).indexOf(dockerImage) < 0) {
@@ -311,7 +312,7 @@ module.exports = {
         return res.badRequest();
       }
 
-      if (typeof vcl !== 'string' || typeof vtc !== 'string') return res.badRequest();
+      if (typeof vcl !== 'string' || typeof vtc !== 'string' || typeof vtctrans != 'string') return res.badRequest();
 
       RequestMetadataService.parseVtc(vtc, function (err) {
 
@@ -329,7 +330,7 @@ module.exports = {
 
           // TODO persist state of 'replay requests twice' option
 
-          ContainerService.beginVtc(fiddle.path, vcl, vtc, dockerImage, function (err) {
+          ContainerService.beginVtc(fiddle.path, vtctrans, vcl, vtc, dockerImage, function (err) {
             // started
 
             var viewState = {
