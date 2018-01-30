@@ -34,12 +34,17 @@ function writeInputFiles (dirPath, requests, vclText, callback) {
 
 }
 
-function writeTestFiles (dirPath, vtctrans, vclText, vtcText, callback) {
+function writeTestFiles (dirPath, dockerImg, vtctrans, vclText, vtcText, callback) {
 
   fs.writeFile(path.join(dirPath, 'default.vcl'), vclText, function (err) {
     if (err) return callback(err);
 
-    var vtcTitle = vtcText.split(/\r?\n/)[0].split(/^\s*varnishtest\s+/)[1].replace(/\"/g,'');
+    var varnish_version = dockerImg.split('_')[0];
+
+    if (varnish_version != 'varnish2') {
+      var vtcTitle = vtcText.split(/\r?\n/)[0].split(/^\s*varnishtest\s+/)[1].replace(/\"/g,'');
+    }
+
     var vtcId    = Math.floor(Math.random() * 0x10000).toString(10);
 
     var filename = 'test_' + ('000' + vtcId + '.vtc');
@@ -154,7 +159,7 @@ module.exports = {
 
     sails.log.debug('Begin tests with vcl in: ' + dirPath);
 
-    writeTestFiles(dirPath, vtctrans, vclText, vtcText, function (err) {
+    writeTestFiles(dirPath, dockerImageName, vtctrans, vclText, vtcText, function (err) {
 
       if (err) {
 

@@ -314,7 +314,7 @@ module.exports = {
 
       if (typeof vcl !== 'string' || typeof vtc !== 'string' || typeof vtctrans != 'string') return res.badRequest();
 
-      RequestMetadataService.parseVtc(vtc, function (err) {
+      RequestMetadataService.parseVtc(vtc, dockerImage, function (err) {
 
         if (err) {
           return res.ok({
