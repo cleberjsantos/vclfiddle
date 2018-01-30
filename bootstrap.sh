@@ -46,6 +46,10 @@ $SCRIPTROOT/varnish3_0_7/build.sh
 $SCRIPTROOT/varnish2_1_5/build.sh
 $SCRIPTROOT/varnish2_0_6/build.sh
 
+# Remove unused images
+# More details here: https://docs.docker.com/engine/reference/commandline/image_prune/
+sudo docker image prune -f
+
 # install the setuid run-varnish-container script
 sudo apt-get install --assume-yes gcc
 sudo mkdir --parents /opt/vclfiddle/

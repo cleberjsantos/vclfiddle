@@ -13,3 +13,7 @@ while read -r image; do
     image_path="$(dirname $0)/${image}"
     sudo docker build --force-rm --tag="${image}:latest" $image_path
 done <<< "$images"
+
+# Remove unused images
+# More details here: https://docs.docker.com/engine/reference/commandline/image_prune/
+sudo docker image prune -f
