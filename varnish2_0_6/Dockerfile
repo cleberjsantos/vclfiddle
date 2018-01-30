@@ -55,10 +55,7 @@ RUN cd /usr/local/src/varnish-$VARNISH_VERSION && \
   rm ../varnish-$VARNISH_VERSION.tgz && \
   mkdir /etc/varnish
 
-ADD ./secret /etc/varnish/secret
-
-RUN chmod 600 /etc/varnish/secret
-
 VOLUME ["/fiddle"]
 CMD ["/run.sh"]
 ADD run.sh /run.sh
+ADD vtctrans.py /vtctrans.py

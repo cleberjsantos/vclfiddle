@@ -98,5 +98,3 @@ elif [ "$1" == "vtctrans" ]; then
 else
    run
 fi
-
-
