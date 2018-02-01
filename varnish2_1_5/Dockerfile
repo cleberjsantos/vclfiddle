@@ -23,13 +23,11 @@ RUN apt-get update && \
     patch \
     pkg-config \
     python-docutils \
-    wget \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+    wget
 
 # Install Varnish from source, so that Varnish modules can be compiled and installed.
-ENV VARNISH_VERSION=2.1.5
-ENV VARNISH_SHA256SUM=2d8049be14ada035d0e3a54c2b519143af40d03d917763cf72d53d8188e5ef83
+ENV VARNISH_VERSION=2.1.5 \
+    VARNISH_SHA256SUM=2d8049be14ada035d0e3a54c2b519143af40d03d917763cf72d53d8188e5ef83
 
 RUN apt-get update && \
   mkdir -p /usr/local/src && \
@@ -51,7 +49,11 @@ RUN cd /usr/local/src/varnish-$VARNISH_VERSION && \
   make install && \
   ldconfig && \
   rm ../varnish-$VARNISH_VERSION.tgz && \
-  mkdir /etc/varnish
+  mkdir /etc/varnish && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* \
+     /usr/share/man/* \
+     /usr/local/src/varnish-$VARNISH_VERSION
 
 ADD ./secret /etc/varnish/secret
 

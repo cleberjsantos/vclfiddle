@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 LABEL maintainer "vclfiddle.net <support@vclfiddle.net>"
 
 RUN apt-get update && \
-  apt-get install --assume-yes --no-install-recommends \
+    apt-get install --assume-yes --no-install-recommends \
     automake \
     apt-transport-https \
     apt-utils \
@@ -21,13 +21,11 @@ RUN apt-get update && \
     netcat \
     pkg-config \
     python-docutils \
-    wget \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+    wget
 
 # Install Varnish from source, so that Varnish modules can be compiled and installed.
-ENV VARNISH_VERSION=5.0.0
-ENV VARNISH_SHA256SUM=5101ad72b29d288a07e2e5ded4c2abe850b70ff000c13ceb1764625e83823f4a
+ENV VARNISH_VERSION=5.0.0 \
+    VARNISH_SHA256SUM=5101ad72b29d288a07e2e5ded4c2abe850b70ff000c13ceb1764625e83823f4a
 
 RUN apt-get update && \
   mkdir -p /usr/local/src && \
@@ -41,7 +39,11 @@ RUN apt-get update && \
   make install && \
   ldconfig && \
   rm ../varnish-$VARNISH_VERSION.tgz && \
-  mkdir /etc/varnish
+  mkdir /etc/varnish && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* \
+     /usr/share/man/* \
+     /usr/local/src/varnish-$VARNISH_VERSION
 
 ADD ./secret /etc/varnish/secret
 
