@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 LABEL maintainer "vclfiddle.net <support@vclfiddle.net>"
 
 RUN apt-get update && \
-  apt-get install --assume-yes --no-install-recommends \
+    apt-get install --assume-yes --no-install-recommends \
     automake \
     apt-transport-https \
     apt-utils \
@@ -21,13 +21,11 @@ RUN apt-get update && \
     netcat \
     pkg-config \
     python-docutils \
-    wget \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+    wget
 
 # Install Varnish from source, so that Varnish modules can be compiled and installed.
-ENV VARNISH_VERSION=5.2.1
-ENV VARNISH_SHA256SUM=b8452c9d78c16f78c8cfd1c1a1e696523bf64b7721c330150dcc0852459014b3
+ENV VARNISH_VERSION=5.2.1 \
+    VARNISH_SHA256SUM=b8452c9d78c16f78c8cfd1c1a1e696523bf64b7721c330150dcc0852459014b3
 
 RUN apt-get update && \
   mkdir -p /usr/local/src && \
@@ -41,7 +39,11 @@ RUN apt-get update && \
   make install && \
   ldconfig && \
   rm ../varnish-$VARNISH_VERSION.tgz && \
-  mkdir /etc/varnish
+  mkdir /etc/varnish && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* \
+     /usr/share/man/* \
+     /usr/local/src/varnish-$VARNISH_VERSION
 
 ADD ./secret /etc/varnish/secret
 
@@ -50,3 +52,4 @@ RUN chmod 600 /etc/varnish/secret
 VOLUME ["/fiddle"]
 CMD ["/run.sh"]
 ADD run.sh /run.sh
+ADD vtctrans.py /vtctrans.py

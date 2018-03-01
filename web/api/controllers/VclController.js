@@ -10,9 +10,47 @@ var path = require('path');
 var temp = require('temp');
 var url = require('url');
 
-const defaultVcl = 'vcl 4.0; backend default { .host = "www.vclfiddle.net"; .port = "80"; }';
+const defaultVcl = 'vcl 4.0;\n\nbackend default {\n .host = "www.vclfiddle.net";\n .port = "80";\n}';
 const defaultHar = "curl http://www.vclfiddle.net --header 'User-Agent: vclFiddle'";
 const defaultImage = 'varnish5_2_1';
+
+const defaultVcl_toTest = 'vcl 4.0;\n\n' +
+
+'backend default {\n' +
+'        .host = "www.vclfiddle.net";\n' +
+'        .port = "80";\n' +
+'}\n\n' +
+
+'sub vcl_recv {\n' +
+'        set req.http.x-original_url = req.url;\n\n' +
+'        if (req.url ~ "/") {\n' +
+'                return(hash);\n' +
+'        }\n' +
+'}\n';
+
+const defaultVtc = 'varnishtest "Testing Varnish as Proxy"\n\n' +
+
+'server s1 {\n' +
+'    rxreq\n' +
+'    txresp\n\n' +
+
+'} -start\n\n' +
+
+'varnish v1 -vcl {\n' +
+"   # don't remove the comment below\n" +
+'   # VCL_PLACEHOLDER\n' +
+'} -start\n\n' +
+
+'client c1 {\n' +
+'  txreq\n' +
+'  rxresp\n' +
+'  expect resp.http.via ~ "varnish"\n' +
+'  expect resp.status == 200\n' +
+'} -run\n\n' +
+
+'varnish v1 -expect cache_miss == 0\n' +
+'varnish v1 -expect cache_hit == 0';
+
 const supportedImages = {
   'varnish5_2_1': 'Varnish 5.2.1',
   'varnish5_1_3': 'Varnish 5.1.3',
@@ -46,7 +84,7 @@ function completeRun(err, fiddle, allRequests) {
 
   ContainerService.readOutputFiles(fiddle.path, function (err, output) {
     if (err) return writeCompletedData(err);
-    if (output.runlog.length > 0) return writeCompletedData('Error: ' + output.runlog);
+    if (output.runlog.length > 0) return writeCompletedData(output.runlog);
 
     var parsedNcsa = RequestMetadataService.parseVarnish4NCSA(output.varnishncsa);
 
@@ -63,165 +101,270 @@ function completeRun(err, fiddle, allRequests) {
 module.exports = {
 	index: function (req, res) {
 
-    var fiddleid = req.params.fiddleid || '';
-    var runindex = req.params.runindex || '0';
+      var fiddleid = req.params.fiddleid || '';
+      var runindex = req.params.runindex || '0';
 
-    if (!fiddleid) {
-      return res.view({
-        fiddleid: '',
-        vcl: defaultVcl,
-        har: defaultHar,
-        log: '',
-        image: defaultImage,
-        supportedImages: supportedImages
-      });
-    }
-
-    FiddlePersistenceService.getFiddleRun(fiddleid, runindex, function (err, fiddle) {
-
-      if (err) return res.serverError(err);
-
-      if (fiddle === null) return res.notFound();
-
-      FiddlePersistenceService.loadViewState(fiddle, function (err, viewState) {
-        if (err) return res.serverError(err);
-
+      if (!fiddleid) {
         return res.view({
-          fiddleid: fiddle.id,
-          vcl: viewState.vcl,
-          har: viewState.har,
-          log: viewState.log,
-          results: viewState.results,
-          image: viewState.image,
+          fiddleid: '',
+          vcl: defaultVcl,
+          har: defaultHar,
+          log: '',
+          image: defaultImage,
           supportedImages: supportedImages
-        })
+        });
+      }
 
-      });
+      FiddlePersistenceService.getFiddleRun(fiddleid, runindex, function (err, fiddle) {
 
-    });
-
-  },
-
-  result: function (req, res) {
-    var fiddleid = req.query.fiddleid || '';
-    var runindex = req.query.runindex || '0';
-    if (!fiddleid) return res.badRequest();
-
-    FiddlePersistenceService.getFiddleRun(fiddleid, runindex, function (err, fiddle) {
-
-      if (err) return res.serverError(err);
-
-      if (fiddle === null) return res.notFound();
-
-      ContainerService.getReplayResult(fiddle.path, function (err, completedData) {
         if (err) return res.serverError(err);
 
-        if (!completedData.completedAt) {
-          // not complete yet
-          // TODO timeout if too long to complete
-          // TODO instruct client to cache only briefly if at all
-          return res.ok({});
-        }
+        if (fiddle === null) return res.notFound();
 
         FiddlePersistenceService.loadViewState(fiddle, function (err, viewState) {
           if (err) return res.serverError(err);
 
-          viewState.log = completedData.error || completedData.log,
-          viewState.results = completedData.results
+          return res.view({
+            fiddleid: fiddle.id,
+            vcl: viewState.vcl,
+            har: viewState.har,
+            log: viewState.log,
+            results: viewState.results,
+            image: viewState.image,
+            supportedImages: supportedImages
+          })
 
-          FiddlePersistenceService.saveViewState(fiddle, viewState, function (err) {
-            if (err) return res.serverError(err);
-
-            return res.ok({
-              log: viewState.log,
-              results: viewState.results
-            });
-
-          });
         });
+
       });
 
-    });
-  },
+    },
 
-  run: function (req, res) {
-    var fiddleid = req.body.fiddleid || '';
-    var vcl = req.body.vcl;
-    var rawRequests = req.body.har;
-    var dockerImage = req.body.image || defaultImage;
+    test: function(req, res) {
+      var fiddleid = req.params.fiddleid || '';
+      var runindex = req.params.runindex || '0';
 
-
-    if (Object.keys(supportedImages).indexOf(dockerImage) < 0) {
-      sails.log.warn('Invalid image parameter:' + dockerImage);
-      return res.badRequest();
-    }
-
-    if (typeof vcl !== 'string' || typeof rawRequests !== 'string') return res.badRequest();
-
-    RequestMetadataService.parseInputRequests(rawRequests, function (err, _ignored, allRequests) {
-
-      if (err) {
-        return res.ok({
-          fiddleid: fiddleid,
-          vcl: vcl,
-          har: rawRequests,
-          log: err.toString()
-        }, 'vcl/index');
+      if (!fiddleid) {
+        return res.view({
+          fiddleid: '',
+          vcl: defaultVcl_toTest,
+          vtc: defaultVtc,
+          log: '',
+          image: defaultImage,
+          supportedImages: supportedImages
+        });
       }
 
-      if (allRequests.includedRequests.length == 0) {
-        return res.ok({
-          fiddleid: fiddleid,
-          vcl: vcl,
-          har: rawRequests,
-          log: 'HAR does not contain any supported requests.'
-        }, 'vcl/index');
-      }
+      FiddlePersistenceService.getFiddleRun(fiddleid, runindex, function (err, fiddle) {
 
-      if (!!req.body.dbl) {
-        allRequests.includedRequests = allRequests.includedRequests.concat(allRequests.includedRequests);
-      }
-
-      FiddlePersistenceService.prepareFiddle(fiddleid, function (err, fiddle) {
         if (err) return res.serverError(err);
 
-        // TODO persist state of 'replay requests twice' option
+        if (fiddle === null) return res.notFound();
 
-        ContainerService.beginReplay(fiddle.path, allRequests.includedRequests, vcl, dockerImage, function (err) {
-          // started
+        FiddlePersistenceService.loadViewState(fiddle, function (err, viewState) {
+          if (err) return res.serverError(err);
 
-          var viewState = {
-            image: dockerImage,
-            vcl: vcl,
-            har: rawRequests
-          };
-          if (err) {
-            viewState.log = 'Error: ' + err;
-          }
+          return res.view({
+            fiddleid: fiddle.id,
+            vcl: viewState.vcl,
+            vtc: viewState.vtc,
+            log: viewState.log,
+            results: viewState.results,
+            image: viewState.image,
+            supportedImages: supportedImages
+          })
 
-          FiddlePersistenceService.saveViewState(fiddle, viewState, function (err) {
-            if (err) return res.serverError(err);
-
-            return res.ok({
-              fiddleid: fiddle.id,
-              runindex: fiddle.runIndex,
-              vcl: viewState.vcl,
-              har: viewState.har,
-              log: viewState.log
-            });
-
-          });
-
-        }, function (err) {
-          // completed
-          return completeRun(err, fiddle, allRequests);
         });
 
       });
 
-    });
+    },
 
-  }
+    result: function (req, res) {
+      var fiddleid = req.query.fiddleid || '';
+      var runindex = req.query.runindex || '0';
+      if (!fiddleid) return res.badRequest();
+
+      FiddlePersistenceService.getFiddleRun(fiddleid, runindex, function (err, fiddle) {
+
+        if (err) return res.serverError(err);
+
+        if (fiddle === null) return res.notFound();
+
+        ContainerService.getReplayResult(fiddle.path, function (err, completedData) {
+          if (err) return res.serverError(err);
+
+          if (!completedData.completedAt) {
+            // not complete yet
+            // TODO timeout if too long to complete
+            // TODO instruct client to cache only briefly if at all
+            return res.ok({});
+          }
+
+          FiddlePersistenceService.loadViewState(fiddle, function (err, viewState) {
+            if (err) return res.serverError(err);
+
+            viewState.log = completedData.error || completedData.log,
+            viewState.results = completedData.results
+
+            FiddlePersistenceService.saveViewState(fiddle, viewState, function (err) {
+              if (err) return res.serverError(err);
+
+              return res.ok({
+                log: viewState.log,
+                results: viewState.results
+              });
+
+            });
+          });
+        });
+
+      });
+    },
+
+    run: function (req, res) {
+      var fiddleid = req.body.fiddleid || '';
+      var vcl = req.body.vcl;
+      var rawRequests = req.body.har;
+      var dockerImage = req.body.image || defaultImage;
+
+      if (Object.keys(supportedImages).indexOf(dockerImage) < 0) {
+        sails.log.warn('Invalid image parameter:' + dockerImage);
+        return res.badRequest();
+      }
+
+      if (typeof vcl !== 'string' || typeof rawRequests !== 'string') return res.badRequest();
+
+      RequestMetadataService.parseInputRequests(rawRequests, function (err, _ignored, allRequests) {
+
+        if (err) {
+          return res.ok({
+            fiddleid: fiddleid,
+            vcl: vcl,
+            har: rawRequests,
+            log: err.toString()
+          }, 'vcl/index');
+        }
+
+        if (allRequests.includedRequests.length == 0) {
+          return res.ok({
+            fiddleid: fiddleid,
+            vcl: vcl,
+            har: rawRequests,
+            log: 'HAR does not contain any supported requests.'
+          }, 'vcl/index');
+        }
+
+        if (!!req.body.dbl) {
+          allRequests.includedRequests = allRequests.includedRequests.concat(allRequests.includedRequests);
+        }
+
+        FiddlePersistenceService.prepareFiddle(fiddleid, function (err, fiddle) {
+          if (err) return res.serverError(err);
+
+          // TODO persist state of 'replay requests twice' option
+
+          ContainerService.beginReplay(fiddle.path, allRequests.includedRequests, vcl, dockerImage, function (err) {
+            // started
+
+            var viewState = {
+              image: dockerImage,
+              vcl: vcl,
+              har: rawRequests
+            };
+            if (err) {
+              viewState.log = 'Error: ' + err;
+            }
+
+            FiddlePersistenceService.saveViewState(fiddle, viewState, function (err) {
+              if (err) return res.serverError(err);
+
+              return res.ok({
+                fiddleid: fiddle.id,
+                runindex: fiddle.runIndex,
+                vcl: viewState.vcl,
+                har: viewState.har,
+                log: viewState.log
+              });
+
+            });
+
+          }, function (err) {
+            // completed
+            return completeRun(err, fiddle, allRequests);
+          });
+
+        });
+
+      });
+
+    },
+
+    runtest: function (req, res) {
+      var fiddleid = req.body.fiddleid || '';
+      var vcl = req.body.vcl;
+      var vtc = req.body.vtc;
+      var vtctrans = req.body.use_vtctrans || 'off';
+      var dockerImage = req.body.image || defaultImage;
+
+      if (Object.keys(supportedImages).indexOf(dockerImage) < 0) {
+        sails.log.warn('Invalid image parameter:' + dockerImage);
+        return res.badRequest();
+      }
+
+      if (typeof vcl !== 'string' || typeof vtc !== 'string' || typeof vtctrans != 'string') return res.badRequest();
+
+      RequestMetadataService.parseVtc(vtc, dockerImage, function (err) {
+
+        if (err) {
+          return res.ok({
+            fiddleid: fiddleid,
+            vcl: vcl,
+            vtc: vtc,
+            log: err.toString()
+          }, 'vcl/test');
+        }
+
+        FiddlePersistenceService.prepareFiddle(fiddleid, function (err, fiddle) {
+          if (err) return res.serverError(err);
+
+          // TODO persist state of 'replay requests twice' option
+
+          ContainerService.beginVtc(fiddle.path, vtctrans, vcl, vtc, dockerImage, function (err) {
+            // started
+
+            var viewState = {
+              image: dockerImage,
+              vcl: vcl,
+              vtc: vtc
+            };
+            if (err) {
+              viewState.log = 'Error: ' + err;
+            }
+
+            FiddlePersistenceService.saveViewState(fiddle, viewState, function (err) {
+              if (err) return res.serverError(err);
+
+              return res.ok({
+                fiddleid: fiddle.id,
+                runindex: fiddle.runIndex,
+                vcl: viewState.vcl,
+                vtc: viewState.vtc,
+                log: viewState.log
+              });
+
+            });
+
+          }, function (err) {
+            // completed
+            return completeRun(err, fiddle);
+          });
+
+        });
+
+      });
+
+    }
 
 };
 

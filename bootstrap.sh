@@ -46,14 +46,21 @@ $SCRIPTROOT/varnish3_0_7/build.sh
 $SCRIPTROOT/varnish2_1_5/build.sh
 $SCRIPTROOT/varnish2_0_6/build.sh
 
+# Remove unused images
+# More details here: https://docs.docker.com/engine/reference/commandline/image_prune/
+sudo docker image prune -f
+
 # install the setuid run-varnish-container script
 sudo apt-get install --assume-yes gcc
 sudo mkdir --parents /opt/vclfiddle/
 sudo gcc $SCRIPTROOT/run-varnish-container.c -o /opt/vclfiddle/run-varnish-container
 sudo cp $SCRIPTROOT/run-varnish-container.py /opt/vclfiddle/run-varnish-container.py
+sudo cp $SCRIPTROOT/vtctrans.py /opt/vclfiddle/vtctrans.py
 sudo chown root:root /opt/vclfiddle/run-varnish-container*
+sudo chown root:root /opt/vclfiddle/vtctrans.py
 sudo chmod 04755 /opt/vclfiddle/run-varnish-container
 sudo chmod 755 /opt/vclfiddle/run-varnish-container.py
+sudo chmod 755 /opt/vclfiddle/vtctrans.py
 
 # TODO install nginx on port 80 to proxy to sails 1337
 

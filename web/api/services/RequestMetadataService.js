@@ -92,6 +92,24 @@ function parseResponse(rawResponse) {
   return responseObject;
 }
 
+function parseVtcCommands(rawInput, dockerImg, callback) {
+  if (typeof rawInput !== 'string' || rawInput.length == 0 || typeof dockerImg !== 'string') {
+    return callback(new Error('rawInput is not a string or is empty.'));
+  }
+
+  var vtestparam = rawInput.split(/\r?\n/).filter(function (l) { return !!l; });
+  var varnish_version = dockerImg.split('_')[0];
+
+  if (varnish_version != 'varnish2') {
+    if (!vtestparam[0].match(/^\s*varnishtest\s+/)) {
+      sails.log.debug('Line does not begin with a varnishtest command: ' + vtestparam[0]);
+      return null;
+    }
+  }
+
+  return callback(null);
+}
+
 function parseCurlCommands(rawInput, callback) {
   if (typeof rawInput !== 'string' || rawInput.length == 0) {
     return callback(new Error('rawInput is not a string or is empty.'));
@@ -309,6 +327,26 @@ module.exports = {
     return results;
     //callback(null, results);
 
-  }
+  },
+
+  parseVtc: function (rawInput, dockerImg, callback) {
+
+    try {
+      var parsedVtc = JSON.parse(rawInput);
+    } catch (ex) {
+      return parseVtcCommands(rawInput, dockerImg, function (err) {
+        if (err) {
+          sails.log.debug('Failed to parse VTC because ' + ex);
+          return callback(new Error('Failed to parse requests'), rawInput, null);
+        }
+        return callback(null, rawInput);
+      });
+    }
+
+    return callback(
+      null
+    );
+
+  },
 
 }

@@ -25,13 +25,11 @@ RUN apt-get update && \
     patch \
     pkg-config \
     python-docutils \
-    wget \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+    wget
 
 # Install Varnish from source, so that Varnish modules can be compiled and installed.
-ENV VARNISH_VERSION=2.0.6
-ENV VARNISH_SHA256SUM=08c5f6059cb6e2df97d90ddf8e183156faa007121da3b3128678825b4b9fd2eb
+ENV VARNISH_VERSION=2.0.6 \
+    VARNISH_SHA256SUM=08c5f6059cb6e2df97d90ddf8e183156faa007121da3b3128678825b4b9fd2eb
 
 RUN apt-get update && \
   mkdir -p /usr/local/src && \
@@ -53,7 +51,11 @@ RUN cd /usr/local/src/varnish-$VARNISH_VERSION && \
   make install && \
   ldconfig && \
   rm ../varnish-$VARNISH_VERSION.tgz && \
-  mkdir /etc/varnish
+  mkdir /etc/varnish && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* \
+     /usr/share/man/* \
+     /usr/local/src/varnish-$VARNISH_VERSION
 
 ADD ./secret /etc/varnish/secret
 
@@ -62,3 +64,4 @@ RUN chmod 600 /etc/varnish/secret
 VOLUME ["/fiddle"]
 CMD ["/run.sh"]
 ADD run.sh /run.sh
+ADD vtctrans.py /vtctrans.py

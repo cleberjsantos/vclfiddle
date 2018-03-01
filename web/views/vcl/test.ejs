@@ -1,11 +1,11 @@
-<header class="navbar navbar-static-top" style="background: #1e9753">
+<header class="navbar navbar-static-top" style="background: #a9271d">
   <div class="container-fluid">
-    <div class="navbar-header col-md-2" style="background-color:#1e9753">
-      <a href="/" class="navbar-brand" style="color:white"><span style="background-color: white;color: #1e9753;padding: 8px 12px;font-weight: bolder;">/</span> vcl<span style="font-weight:bolder">Fiddle</span></a>
+    <div class="navbar-header col-md-2" style="background-color:#a9271d">
+      <a href="/" class="navbar-brand" style="color:white"><span style="background-color: white;color: #a9271d;padding: 8px 12px;font-weight: bolder;">/</span> vcl<span style="font-weight:bolder">Fiddle</span></a>
     </div>
     <nav class="collapse navbar-collapse" role="navigation" style="background-color:black">
       <ul class="nav navbar-nav nav-pills">
-        <li><a href="#run" id="run">Run <span class="glyphicon glyphicon-play"></span></a></li>
+        <li><a href="#runtest" id="runtest">Run Test <span class="glyphicon glyphicon-play"></span></a></li>
         <li><a href="/test" id="test">VCL Test <span class="glyphicon glyphicon-list-alt"></span></a></li>
         <li><a href="#share" id="share">Share <span class="glyphicon glyphicon-share"></span></a></li>
         <li><a href="https://github.com/vclfiddle/vclfiddle/blob/master/README.md" target="_blank">Docs <span class="glyphicon glyphicon-question-sign"></span></a></li>
@@ -48,74 +48,31 @@
       <input id="fiddleid" type="hidden" name="fiddleid" value="<%= fiddleid || '' %>" />
       <div class="row">
         <div class="col-md-6">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <div class="editor"><textarea class="form-control" id="vcl" name="vcl"><%= vcl %></textarea><span class="window-label">VCL</span></div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <div class="spinner"><img src="/images/spinner.gif" width="128" height="78" alt="Please wait." /></div>
-                <div class="editor"><textarea class="form-control" id="varnishlog"><%= log %></textarea><span class="window-label">varnishlog</span></div>
-              </div>
+          <div class="col-md-15">
+            <div class="form-group">
+              <div class="editor"><textarea class="form-control" id="vcl" name="vcl"><%= vcl %></textarea><span class="window-label">VCL</span></div>
             </div>
           </div>
         </div>
+
         <div class="col-md-6">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <div class="editor"><textarea class="form-control" id="har" name="har"><%= har %></textarea><span class="window-label">HAR</span></div>
-                <input type="checkbox" id="request_doubling_checkbox" name="dbl" checked="checked" />
-                <label for="request_doubling_checkbox">Replay requests (ie prime cache, then cache hit)</label>
-              </div>
+          <div class="col-md-15">
+            <div class="form-group">
+              <div class="editor"><textarea class="form-control" id="vtc" name="vtc"><%= vtc %></textarea><span class="window-label">VTC</span></div>
             </div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="form-group">
-                <div class="spinner"><img src="/images/spinner.gif" width="128" height="78" alt="Please wait." /></div>
-                <table class="form-control results" id="transactions">
-                  <thead>
-                    <tr>
-                      <th style="width: 2em;" />
-                      <th style="width: 2em;">#</th>
-                      <th>Request</th>
-                      <th style="width: 7em;">Response</th>
-                      <th style="width: 10em;">Content-Type</th>
-                      <th style="width: 4em;">Cache</th>
-                    </tr>
-                  </thead>
-                  <tbody id="results-tbody-template" style="display: none;">
-                    <tr class="result-summary">
-                      <td class="result-details-toggle">[+]</td>
-                      <td class="result-summary-entryIndex">.</td>
-                      <td class="result-summary-request">req</td>
-                      <td class="result-summary-response">resp</td>
-                      <td class="result-summary-contentType">content</td>
-                      <td class="result-summary-cache">cache</td>
-                    </tr>
-                    <tr class="result-details"><td /><td colspan="5">
-                      <div class="results-container">
-                      <table class="form-control">
-                        <thead><tr>
-                          <th>Header Name</th><th>Value</th>
-                        </tr></thead>
-                        <tbody>
-                          <tr id="result-details-row-template" style="display: none;">
-                            <td class="result-details-headerName">name</td>
-                            <td class="result-details-headerValue">value</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      </div>
-                    </td></tr>
-                  <tbody>
-                </table>
-              </div>
+        </div>
+
+        <div class="col-md-12">
+          <input type="checkbox" id="vtctrans_checkbox" name="use_vtctrans" checked="checked" />
+          <label for="vtctrans_checkbox">Use re-format tool for varnishtest</label>
+        </div>
+
+        <div class="col-md-12">
+          <div class="col-md-15">
+            <div class="form-group">
+              <div class="spinner"><img src="/images/spinner.gif" width="128" height="78" alt="Please wait." /></div>
+              <div class="editor"><textarea class="form-control" id="varnishtest"><%= log %></textarea><span class="window-label">varnishtest</span></div>
             </div>
           </div>
         </div>
@@ -131,8 +88,8 @@
 <% if (typeof results === 'object') { %><script>var vclfiddle_results=<%- JSON.stringify(results) %>;</script><% } %>
 <script>
   var vcl = CodeMirror.fromTextArea(document.getElementById("vcl"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true} });
-  var har = CodeMirror.fromTextArea(document.getElementById("har"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true} });
-  var varnishlog = CodeMirror.fromTextArea(document.getElementById("varnishlog"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true}, readOnly: true });
+  var vtc = CodeMirror.fromTextArea(document.getElementById("vtc"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true} });
+  var varnishtest = CodeMirror.fromTextArea(document.getElementById("varnishtest"), { lineNumbers: true, matchBrackets: true, mode: {name: "text/x-csrc", json: true}, readOnly: true });
   var hiddenFiddleIdInput = document.getElementById('fiddleid');
 
   function clearTransactions() {
@@ -205,7 +162,7 @@
       });
 
       // TODO show ncsa.handling in details
-      // TODO show vxid for correlation with varnishlog
+      // TODO show vxid for correlation with varnishtest
 
       detailRowTemplate.remove();
 
@@ -214,14 +171,14 @@
     });
   };
 
-  $("#run").click(function (e) {
+  $("#runtest").click(function (e) {
     e.preventDefault();
     vcl.save();
-    har.save();
+    vtc.save();
     $('.spinner img').fadeIn();
     $.ajax({
       type: "POST",
-      url: "/vcl/run",
+      url: "/vcl/runtest",
       data: $( "#input" ).serialize(),
       headers: { Accept: "application/json; charset=utf-8"}
     }).done(function( data ) {
@@ -229,14 +186,14 @@
       var newFiddleUrl = ['/', data.fiddleid, '/', data.runindex].join('');
       window.history.pushState({fiddleid: data.fiddleid, runindex: data.runindex}, '', newFiddleUrl);
       // TODO handle popState for history navigation
-      varnishlog.setValue(data.log || '');
+      varnishtest.setValue(data.log || '');
       clearTransactions();
       var poll = function () {
         var resultUrl = ['/vcl/result?fiddleid=', data.fiddleid, '&runindex=', data.runindex].join('');
         $.getJSON(resultUrl, function (data) {
           if (data.log) {
             $('.spinner img').fadeOut();
-            varnishlog.setValue(data.log);
+            varnishtest.setValue(data.log);
             if (data.results) {
               displayTransactions(data.results);
             }
@@ -320,7 +277,7 @@
     color: white;
   }
   table#transactions td.cache-hit {
-    background-color: #1e9753;
+    background-color: #a9271d;
     color: white;
   }
   .results-container table { display: table; }
