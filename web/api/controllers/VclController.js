@@ -12,7 +12,7 @@ var url = require('url');
 
 const defaultVcl = 'vcl 4.0;\n\nbackend default {\n .host = "www.vclfiddle.net";\n .port = "80";\n}';
 const defaultHar = "curl http://www.vclfiddle.net --header 'User-Agent: vclFiddle'";
-const defaultImage = 'varnish5_2_1';
+const defaultImage = 'varnish6_0_0';
 
 const defaultVcl_toTest = 'vcl 4.0;\n\n' +
 
@@ -52,6 +52,7 @@ const defaultVtc = 'varnishtest "Testing Varnish as Proxy"\n\n' +
 'varnish v1 -expect cache_hit == 0';
 
 const supportedImages = {
+  'varnish6_0_0': 'Varnish 6.0.0',
   'varnish5_2_1': 'Varnish 5.2.1',
   'varnish5_1_3': 'Varnish 5.1.3',
   'varnish5_0_0': 'Varnish 5.0.0',
