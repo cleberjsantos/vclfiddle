@@ -37,6 +37,7 @@ pushd /var/web && sudo npm install && popd
 sudo mkdir -p /var/web/.tmp && sudo chown -R 1001 /var/web/.tmp
 
 # build the Varnish docker image
+$SCRIPTROOT/varnish6_0_0/build.sh
 $SCRIPTROOT/varnish5_2_1/build.sh
 $SCRIPTROOT/varnish5_1_3/build.sh
 $SCRIPTROOT/varnish5_0_0/build.sh

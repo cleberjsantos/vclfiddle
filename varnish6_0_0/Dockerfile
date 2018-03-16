@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 LABEL maintainer "vclfiddle.net <support@vclfiddle.net>"
 
 RUN apt-get update && \
-  apt-get install --assume-yes --no-install-recommends \
+    apt-get install --assume-yes --no-install-recommends \
     automake \
     apt-transport-https \
     apt-utils \
@@ -24,8 +24,8 @@ RUN apt-get update && \
     wget
 
 # Install Varnish from source, so that Varnish modules can be compiled and installed.
-ENV VARNISH_VERSION=4.0.5 \
-    VARNISH_SHA256SUM=d90ffa33902d3ac40742cbb50588a37f467f23797f93e67a261724f4a7fb0aff
+ENV VARNISH_VERSION=6.0.0 \
+    VARNISH_SHA256SUM=c7b2839c95b2bf1f336abc20b5d8b149c3aa72deff142f2379d1d431206b0bee
 
 RUN apt-get update && \
   mkdir -p /usr/local/src && \

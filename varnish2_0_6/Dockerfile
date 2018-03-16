@@ -62,6 +62,6 @@ ADD ./secret /etc/varnish/secret
 RUN chmod 600 /etc/varnish/secret
 
 VOLUME ["/fiddle"]
-CMD ["/run.sh"]
+CMD ["/bin/bash", "/run.sh"]
 ADD run.sh /run.sh
 ADD vtctrans.py /vtctrans.py

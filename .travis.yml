@@ -47,6 +47,7 @@ before_script:
   - sudo chmod 0775 /var/lib/vclfiddle/
 
 script:
+  - $SCRIPTROOT/varnish6_0_0/build.sh
   - $SCRIPTROOT/varnish5_2_1/build.sh
   - $SCRIPTROOT/varnish5_1_3/build.sh
   - $SCRIPTROOT/varnish5_0_0/build.sh
